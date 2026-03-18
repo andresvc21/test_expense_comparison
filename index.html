@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Cost Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <header>
+      <h1>Life Cost Calculator</h1>
+      <blockquote>
+        "When you buy something, you're not paying with money — you're paying
+        with the hours of your life you spent earning that money."
+        <cite>— José Mujica</cite>
+      </blockquote>
+    </header>
+
+    <div class="inputs">
+      <div class="input-group">
+        <label for="hourly-wage">Your hourly wage</label>
+        <div class="input-wrapper">
+          <span class="currency">$</span>
+          <input
+            type="number"
+            id="hourly-wage"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            inputmode="decimal"
+          >
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="item-price">Item price</label>
+        <div class="input-wrapper">
+          <span class="currency">$</span>
+          <input
+            type="number"
+            id="item-price"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            inputmode="decimal"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="result hidden">
+      <p class="result-time" id="result-time"></p>
+      <p class="result-sentence" id="result-sentence"></p>
+      <p class="result-extra" id="result-extra"></p>
+    </div>
+
+    <div id="empty-state" class="empty-state">
+      <p>Enter your wage and an item price to see its real cost in life hours.</p>
+    </div>
+
+    <footer>
+      <p>Time doesn't come back. Spend it wisely.</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
