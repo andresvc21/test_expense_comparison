@@ -19,13 +19,11 @@
 
     <div class="inputs">
       <div class="input-group">
-        <label id="wage-label" for="wage-input">Your hourly wage</label>
-        <div class="wage-toggle" role="radiogroup" aria-label="Wage type">
-          <input type="radio" id="wage-hourly" name="wage-type" value="hourly" checked>
-          <label for="wage-hourly">Hourly</label>
-          <input type="radio" id="wage-annual" name="wage-type" value="annual">
-          <label for="wage-annual">Annual</label>
-          <span class="toggle-slider"></span>
+        <span class="input-group-label" id="wage-label">Your hourly wage</span>
+        <div class="wage-toggle" id="wage-toggle">
+          <button type="button" class="wage-toggle-btn active" data-type="hourly">Hourly</button>
+          <button type="button" class="wage-toggle-btn" data-type="annual">Annual</button>
+          <span class="wage-toggle-slider"></span>
         </div>
         <div class="input-wrapper">
           <span class="currency">$</span>
