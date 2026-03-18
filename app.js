@@ -1,6 +1,7 @@
 (() => {
   const WAGE_KEY = 'life-cost-wage';
   const WAGE_TYPE_KEY = 'life-cost-wage-type';
+  const LEGACY_KEY = 'life-cost-hourly-wage';
 
   const wageInput = document.getElementById('wage-input');
   const wageLabel = document.getElementById('wage-label');
@@ -10,14 +11,17 @@
   const resultSentence = document.getElementById('result-sentence');
   const resultExtra = document.getElementById('result-extra');
   const emptyState = document.getElementById('empty-state');
-  const toggleBtns = document.querySelectorAll('.toggle-btn');
+  const radioHourly = document.getElementById('wage-hourly');
+  const radioAnnual = document.getElementById('wage-annual');
 
-  let wageType = 'hourly';
+  function getWageType() {
+    return radioAnnual.checked ? 'annual' : 'hourly';
+  }
 
   function getHourlyWage() {
     const raw = parseFloat(wageInput.value);
     if (isNaN(raw) || raw <= 0) return NaN;
-    return wageType === 'annual' ? raw / 2080 : raw;
+    return getWageType() === 'annual' ? raw / 2080 : raw;
   }
 
   function calculate(wage, price) {
@@ -53,6 +57,13 @@
     return `That's about ${workDays} work days.`;
   }
 
+  function updateLabel() {
+    const type = getWageType();
+    wageLabel.textContent = type === 'annual' ? 'Your annual salary' : 'Your hourly wage';
+    wageInput.placeholder = type === 'annual' ? '50,000' : '0.00';
+    wageInput.step = type === 'annual' ? '1000' : '0.01';
+  }
+
   function update() {
     const wage = getHourlyWage();
     const price = parseFloat(priceInput.value);
@@ -79,49 +90,31 @@
     emptyState.classList.add('hidden');
   }
 
-  function updateLabel() {
-    wageLabel.textContent = wageType === 'annual' ? 'Your annual salary' : 'Your hourly wage';
-    wageInput.placeholder = wageType === 'annual' ? '0' : '0.00';
-    wageInput.step = wageType === 'annual' ? '100' : '0.01';
-  }
-
-  function setWageType(type) {
-    wageType = type;
-    toggleBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.type === type);
-    });
-    updateLabel();
-    localStorage.setItem(WAGE_TYPE_KEY, type);
-  }
-
   function saveWage() {
+    const type = getWageType();
+    localStorage.setItem(WAGE_TYPE_KEY, type);
     if (wageInput.value) {
-      localStorage.setItem(WAGE_KEY, JSON.stringify({
-        type: wageType,
-        value: wageInput.value
-      }));
+      localStorage.setItem(WAGE_KEY, wageInput.value);
     }
   }
 
   function loadWage() {
     const savedType = localStorage.getItem(WAGE_TYPE_KEY);
-    if (savedType) {
-      setWageType(savedType);
+    if (savedType === 'annual') {
+      radioAnnual.checked = true;
+    } else {
+      radioHourly.checked = true;
     }
+    updateLabel();
 
     const saved = localStorage.getItem(WAGE_KEY);
     if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.type === wageType) {
-          wageInput.value = data.value;
-        }
-      } catch {
-        // Legacy format (plain number string)
-        const legacy = localStorage.getItem('life-cost-hourly-wage');
-        if (legacy && wageType === 'hourly') {
-          wageInput.value = legacy;
-        }
+      wageInput.value = saved;
+    } else {
+      // Migrate from legacy key
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        wageInput.value = legacy;
       }
     }
   }
@@ -129,15 +122,20 @@
   // Initialize
   loadWage();
 
-  toggleBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.dataset.type === wageType) return;
-      wageInput.value = '';
-      setWageType(btn.dataset.type);
-      saveWage();
-      update();
-      wageInput.focus();
-    });
+  radioHourly.addEventListener('change', () => {
+    wageInput.value = '';
+    updateLabel();
+    saveWage();
+    update();
+    wageInput.focus();
+  });
+
+  radioAnnual.addEventListener('change', () => {
+    wageInput.value = '';
+    updateLabel();
+    saveWage();
+    update();
+    wageInput.focus();
   });
 
   wageInput.addEventListener('input', () => {
@@ -147,6 +145,5 @@
 
   priceInput.addEventListener('input', update);
 
-  // Run initial calculation if wage was loaded from storage
   update();
 })();
