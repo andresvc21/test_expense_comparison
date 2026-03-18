@@ -1,13 +1,24 @@
 (() => {
-  const STORAGE_KEY = 'life-cost-hourly-wage';
+  const WAGE_KEY = 'life-cost-wage';
+  const WAGE_TYPE_KEY = 'life-cost-wage-type';
 
-  const wageInput = document.getElementById('hourly-wage');
+  const wageInput = document.getElementById('wage-input');
+  const wageLabel = document.getElementById('wage-label');
   const priceInput = document.getElementById('item-price');
   const resultEl = document.getElementById('result');
   const resultTime = document.getElementById('result-time');
   const resultSentence = document.getElementById('result-sentence');
   const resultExtra = document.getElementById('result-extra');
   const emptyState = document.getElementById('empty-state');
+  const toggleBtns = document.querySelectorAll('.toggle-btn');
+
+  let wageType = 'hourly';
+
+  function getHourlyWage() {
+    const raw = parseFloat(wageInput.value);
+    if (isNaN(raw) || raw <= 0) return NaN;
+    return wageType === 'annual' ? raw / 2080 : raw;
+  }
 
   function calculate(wage, price) {
     if (!wage || wage <= 0 || price < 0) return null;
@@ -43,7 +54,7 @@
   }
 
   function update() {
-    const wage = parseFloat(wageInput.value);
+    const wage = getHourlyWage();
     const price = parseFloat(priceInput.value);
 
     if (isNaN(wage) || isNaN(price) || wage <= 0) {
@@ -68,21 +79,66 @@
     emptyState.classList.add('hidden');
   }
 
+  function updateLabel() {
+    wageLabel.textContent = wageType === 'annual' ? 'Your annual salary' : 'Your hourly wage';
+    wageInput.placeholder = wageType === 'annual' ? '0' : '0.00';
+    wageInput.step = wageType === 'annual' ? '100' : '0.01';
+  }
+
+  function setWageType(type) {
+    wageType = type;
+    toggleBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    updateLabel();
+    localStorage.setItem(WAGE_TYPE_KEY, type);
+  }
+
   function saveWage() {
     if (wageInput.value) {
-      localStorage.setItem(STORAGE_KEY, wageInput.value);
+      localStorage.setItem(WAGE_KEY, JSON.stringify({
+        type: wageType,
+        value: wageInput.value
+      }));
     }
   }
 
   function loadWage() {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const savedType = localStorage.getItem(WAGE_TYPE_KEY);
+    if (savedType) {
+      setWageType(savedType);
+    }
+
+    const saved = localStorage.getItem(WAGE_KEY);
     if (saved) {
-      wageInput.value = saved;
+      try {
+        const data = JSON.parse(saved);
+        if (data.type === wageType) {
+          wageInput.value = data.value;
+        }
+      } catch {
+        // Legacy format (plain number string)
+        const legacy = localStorage.getItem('life-cost-hourly-wage');
+        if (legacy && wageType === 'hourly') {
+          wageInput.value = legacy;
+        }
+      }
     }
   }
 
   // Initialize
   loadWage();
+
+  toggleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.type === wageType) return;
+      wageInput.value = '';
+      setWageType(btn.dataset.type);
+      saveWage();
+      update();
+      wageInput.focus();
+    });
+  });
 
   wageInput.addEventListener('input', () => {
     saveWage();

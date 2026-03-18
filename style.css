@@ -73,6 +73,40 @@ cite {
   letter-spacing: 0.05em;
 }
 
+.wage-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #0f3460;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #0f3460;
+  color: #808090;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.toggle-btn.active {
+  background: #e2b714;
+  color: #1a1a2e;
+}
+
+.toggle-btn:hover:not(.active) {
+  background: #1a3a6e;
+  color: #b0b0c0;
+}
+
 .input-wrapper {
   display: flex;
   align-items: center;
