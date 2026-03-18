@@ -3,22 +3,48 @@
   const WAGE_TYPE_KEY = 'life-cost-wage-type';
 
   const wageInput = document.getElementById('wage-input');
-  const wageLabel = document.getElementById('wage-label');
+  const wageTypeSelect = document.getElementById('wage-type');
   const priceInput = document.getElementById('item-price');
   const resultEl = document.getElementById('result');
   const resultTime = document.getElementById('result-time');
   const resultSentence = document.getElementById('result-sentence');
   const resultExtra = document.getElementById('result-extra');
   const emptyState = document.getElementById('empty-state');
-  const toggleBtns = document.querySelectorAll('.wage-toggle-btn');
-  const slider = document.querySelector('.wage-toggle-slider');
 
-  let wageType = 'hourly';
+  // Format number with thousand separators: 100000 → 100,000
+  function formatNumber(value) {
+    const parts = value.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  }
+
+  // Strip commas to get raw number
+  function parseRaw(str) {
+    return parseFloat(str.replace(/,/g, ''));
+  }
+
+  // Format an input field with thousand separators while preserving cursor
+  function formatInput(input) {
+    const raw = input.value.replace(/,/g, '');
+    // Allow empty, trailing dot, or trailing dot + zeros (user still typing decimals)
+    if (raw === '' || raw === '.' || /\.\d*0*$/.test(raw) && raw.endsWith('0') === false) {
+      // still format the integer part
+    }
+    // Only format if it's a valid partial number
+    if (/^\d*\.?\d*$/.test(raw)) {
+      const cursorPos = input.selectionStart;
+      const commasBefore = (input.value.slice(0, cursorPos).match(/,/g) || []).length;
+      input.value = formatNumber(raw);
+      const commasAfter = (input.value.slice(0, cursorPos).match(/,/g) || []).length;
+      const newPos = cursorPos + (commasAfter - commasBefore);
+      input.setSelectionRange(newPos, newPos);
+    }
+  }
 
   function getHourlyWage() {
-    const raw = parseFloat(wageInput.value);
+    const raw = parseRaw(wageInput.value);
     if (isNaN(raw) || raw <= 0) return NaN;
-    return wageType === 'annual' ? raw / 2080 : raw;
+    return wageTypeSelect.value === 'annual' ? raw / 2080 : raw;
   }
 
   function calculate(wage, price) {
@@ -54,15 +80,9 @@
     return `That's about ${workDays} work days.`;
   }
 
-  function updateLabel() {
-    wageLabel.textContent = wageType === 'annual' ? 'Your annual salary' : 'Your hourly wage';
-    wageInput.placeholder = wageType === 'annual' ? '50000' : '0.00';
-    wageInput.step = wageType === 'annual' ? '1000' : '0.01';
-  }
-
   function update() {
     const wage = getHourlyWage();
-    const price = parseFloat(priceInput.value);
+    const price = parseRaw(priceInput.value);
 
     if (isNaN(wage) || isNaN(price) || wage <= 0) {
       resultEl.classList.add('hidden');
@@ -86,54 +106,66 @@
     emptyState.classList.add('hidden');
   }
 
-  function setWageType(type) {
-    wageType = type;
-    toggleBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.type === type);
-    });
-    slider.classList.toggle('annual', type === 'annual');
-    updateLabel();
-    localStorage.setItem(WAGE_TYPE_KEY, type);
-  }
-
   function saveWage() {
-    if (wageInput.value) {
-      localStorage.setItem(WAGE_KEY, wageInput.value);
+    localStorage.setItem(WAGE_TYPE_KEY, wageTypeSelect.value);
+    const raw = wageInput.value.replace(/,/g, '');
+    if (raw) {
+      localStorage.setItem(WAGE_KEY, raw);
     }
   }
 
   function loadWage() {
     const savedType = localStorage.getItem(WAGE_TYPE_KEY);
     if (savedType) {
-      setWageType(savedType);
+      wageTypeSelect.value = savedType;
     }
+    updatePlaceholder();
 
     const saved = localStorage.getItem(WAGE_KEY);
     if (saved) {
-      wageInput.value = saved;
+      wageInput.value = formatNumber(saved);
+    }
+  }
+
+  function updatePlaceholder() {
+    if (wageTypeSelect.value === 'annual') {
+      wageInput.placeholder = '50,000';
+    } else {
+      wageInput.placeholder = '0.00';
+    }
+  }
+
+  // Only allow digits, dots, and commas in inputs
+  function restrictInput(e) {
+    const allowed = /[\d.,]/;
+    if (e.key.length === 1 && !allowed.test(e.key)) {
+      e.preventDefault();
     }
   }
 
   // Initialize
   loadWage();
 
-  toggleBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.dataset.type === wageType) return;
-      wageInput.value = '';
-      setWageType(btn.dataset.type);
-      saveWage();
-      update();
-      wageInput.focus();
-    });
+  wageTypeSelect.addEventListener('change', () => {
+    wageInput.value = '';
+    updatePlaceholder();
+    saveWage();
+    update();
+    wageInput.focus();
   });
 
+  wageInput.addEventListener('keydown', restrictInput);
   wageInput.addEventListener('input', () => {
+    formatInput(wageInput);
     saveWage();
     update();
   });
 
-  priceInput.addEventListener('input', update);
+  priceInput.addEventListener('keydown', restrictInput);
+  priceInput.addEventListener('input', () => {
+    formatInput(priceInput);
+    update();
+  });
 
   update();
 })();
