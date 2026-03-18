@@ -322,7 +322,19 @@
         return { hours: hours, minutes: minutes, totalHours: totalHours };
       }
 
-      function formatTime(hours, minutes) {
+      function formatTime(totalHours, hours, minutes) {
+        if (totalHours >= 8) {
+          var days = Math.floor(totalHours / 8);
+          var remHours = Math.floor(totalHours % 8);
+          var remMin = Math.round((totalHours - Math.floor(totalHours)) * 60);
+          var dLabel = days === 1 ? 'work day' : 'work days';
+          var hLabel = remHours === 1 ? 'hour' : 'hours';
+          var mLabel = remMin === 1 ? 'minute' : 'minutes';
+          if (remHours === 0 && remMin === 0) return days + ' ' + dLabel;
+          if (remHours === 0) return days + ' ' + dLabel + ' ' + remMin + ' ' + mLabel;
+          if (remMin === 0) return days + ' ' + dLabel + ' ' + remHours + ' ' + hLabel;
+          return days + ' ' + dLabel + ' ' + remHours + ' ' + hLabel + ' ' + remMin + ' ' + mLabel;
+        }
         var hLabel = hours === 1 ? 'hour' : 'hours';
         var mLabel = minutes === 1 ? 'minute' : 'minutes';
         if (hours === 0 && minutes === 0) return '0 minutes';
@@ -332,11 +344,9 @@
       }
 
       function getExtra(totalHours) {
-        if (totalHours < 24) return '';
-        var days = (totalHours / 8).toFixed(1);
+        if (totalHours < 40) return '';
         var weeks = (totalHours / 40).toFixed(1);
-        if (totalHours >= 40) return "That's about " + weeks + ' work weeks (' + days + ' work days).';
-        return "That's about " + days + ' work days.';
+        return "That's about " + weeks + ' work weeks.';
       }
 
       function update() {
@@ -356,7 +366,7 @@
           return;
         }
 
-        var timeStr = formatTime(r.hours, r.minutes);
+        var timeStr = formatTime(r.totalHours, r.hours, r.minutes);
         resultTime.textContent = timeStr;
         resultSentence.textContent = 'This item costs you ' + timeStr + ' of your life.';
         resultExtra.textContent = getExtra(r.totalHours);
