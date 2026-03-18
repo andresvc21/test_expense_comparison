@@ -19,21 +19,21 @@
 
     <div class="inputs">
       <div class="input-group">
-        <span class="input-group-label" id="wage-label">Your hourly wage</span>
-        <div class="wage-toggle" id="wage-toggle">
-          <button type="button" class="wage-toggle-btn active" data-type="hourly">Hourly</button>
-          <button type="button" class="wage-toggle-btn" data-type="annual">Annual</button>
-          <span class="wage-toggle-slider"></span>
+        <div class="wage-header">
+          <label for="wage-input" id="wage-label">Your wage</label>
+          <select id="wage-type">
+            <option value="hourly">Per hour</option>
+            <option value="annual">Per year</option>
+          </select>
         </div>
         <div class="input-wrapper">
           <span class="currency">$</span>
           <input
-            type="number"
+            type="text"
             id="wage-input"
-            min="0"
-            step="0.01"
             placeholder="0.00"
             inputmode="decimal"
+            autocomplete="off"
           >
         </div>
       </div>
@@ -43,12 +43,11 @@
         <div class="input-wrapper">
           <span class="currency">$</span>
           <input
-            type="number"
+            type="text"
             id="item-price"
-            min="0"
-            step="0.01"
             placeholder="0.00"
             inputmode="decimal"
+            autocomplete="off"
           >
         </div>
       </div>
