@@ -1,7 +1,6 @@
 (() => {
   const WAGE_KEY = 'life-cost-wage';
   const WAGE_TYPE_KEY = 'life-cost-wage-type';
-  const LEGACY_KEY = 'life-cost-hourly-wage';
 
   const wageInput = document.getElementById('wage-input');
   const wageLabel = document.getElementById('wage-label');
@@ -11,17 +10,15 @@
   const resultSentence = document.getElementById('result-sentence');
   const resultExtra = document.getElementById('result-extra');
   const emptyState = document.getElementById('empty-state');
-  const radioHourly = document.getElementById('wage-hourly');
-  const radioAnnual = document.getElementById('wage-annual');
+  const toggleBtns = document.querySelectorAll('.wage-toggle-btn');
+  const slider = document.querySelector('.wage-toggle-slider');
 
-  function getWageType() {
-    return radioAnnual.checked ? 'annual' : 'hourly';
-  }
+  let wageType = 'hourly';
 
   function getHourlyWage() {
     const raw = parseFloat(wageInput.value);
     if (isNaN(raw) || raw <= 0) return NaN;
-    return getWageType() === 'annual' ? raw / 2080 : raw;
+    return wageType === 'annual' ? raw / 2080 : raw;
   }
 
   function calculate(wage, price) {
@@ -58,10 +55,9 @@
   }
 
   function updateLabel() {
-    const type = getWageType();
-    wageLabel.textContent = type === 'annual' ? 'Your annual salary' : 'Your hourly wage';
-    wageInput.placeholder = type === 'annual' ? '50,000' : '0.00';
-    wageInput.step = type === 'annual' ? '1000' : '0.01';
+    wageLabel.textContent = wageType === 'annual' ? 'Your annual salary' : 'Your hourly wage';
+    wageInput.placeholder = wageType === 'annual' ? '50000' : '0.00';
+    wageInput.step = wageType === 'annual' ? '1000' : '0.01';
   }
 
   function update() {
@@ -90,9 +86,17 @@
     emptyState.classList.add('hidden');
   }
 
-  function saveWage() {
-    const type = getWageType();
+  function setWageType(type) {
+    wageType = type;
+    toggleBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    slider.classList.toggle('annual', type === 'annual');
+    updateLabel();
     localStorage.setItem(WAGE_TYPE_KEY, type);
+  }
+
+  function saveWage() {
     if (wageInput.value) {
       localStorage.setItem(WAGE_KEY, wageInput.value);
     }
@@ -100,42 +104,28 @@
 
   function loadWage() {
     const savedType = localStorage.getItem(WAGE_TYPE_KEY);
-    if (savedType === 'annual') {
-      radioAnnual.checked = true;
-    } else {
-      radioHourly.checked = true;
+    if (savedType) {
+      setWageType(savedType);
     }
-    updateLabel();
 
     const saved = localStorage.getItem(WAGE_KEY);
     if (saved) {
       wageInput.value = saved;
-    } else {
-      // Migrate from legacy key
-      const legacy = localStorage.getItem(LEGACY_KEY);
-      if (legacy) {
-        wageInput.value = legacy;
-      }
     }
   }
 
   // Initialize
   loadWage();
 
-  radioHourly.addEventListener('change', () => {
-    wageInput.value = '';
-    updateLabel();
-    saveWage();
-    update();
-    wageInput.focus();
-  });
-
-  radioAnnual.addEventListener('change', () => {
-    wageInput.value = '';
-    updateLabel();
-    saveWage();
-    update();
-    wageInput.focus();
+  toggleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.type === wageType) return;
+      wageInput.value = '';
+      setWageType(btn.dataset.type);
+      saveWage();
+      update();
+      wageInput.focus();
+    });
   });
 
   wageInput.addEventListener('input', () => {
