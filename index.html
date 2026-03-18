@@ -19,12 +19,16 @@
 
     <div class="inputs">
       <div class="input-group">
-        <label for="hourly-wage">Your hourly wage</label>
+        <label id="wage-label" for="wage-input">Your hourly wage</label>
+        <div class="wage-toggle">
+          <button type="button" class="toggle-btn active" data-type="hourly">Hourly</button>
+          <button type="button" class="toggle-btn" data-type="annual">Annual</button>
+        </div>
         <div class="input-wrapper">
           <span class="currency">$</span>
           <input
             type="number"
-            id="hourly-wage"
+            id="wage-input"
             min="0"
             step="0.01"
             placeholder="0.00"
