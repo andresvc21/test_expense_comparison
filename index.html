@@ -20,9 +20,12 @@
     <div class="inputs">
       <div class="input-group">
         <label id="wage-label" for="wage-input">Your hourly wage</label>
-        <div class="wage-toggle">
-          <button type="button" class="toggle-btn active" data-type="hourly">Hourly</button>
-          <button type="button" class="toggle-btn" data-type="annual">Annual</button>
+        <div class="wage-toggle" role="radiogroup" aria-label="Wage type">
+          <input type="radio" id="wage-hourly" name="wage-type" value="hourly" checked>
+          <label for="wage-hourly">Hourly</label>
+          <input type="radio" id="wage-annual" name="wage-type" value="annual">
+          <label for="wage-annual">Annual</label>
+          <span class="toggle-slider"></span>
         </div>
         <div class="input-wrapper">
           <span class="currency">$</span>
