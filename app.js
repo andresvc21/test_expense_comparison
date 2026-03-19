@@ -1,6 +1,20 @@
 (() => {
   const WAGE_KEY = 'life-cost-wage';
   const WAGE_TYPE_KEY = 'life-cost-wage-type';
+  const USER_ID_KEY = 'life-cost-user-id';
+
+  // Generate a unique ID for this browser so Firestore knows which
+  // wage document belongs to this user (no login required).
+  // The ID is saved in localStorage so it stays the same across visits.
+  function getOrCreateUserId() {
+    let id = localStorage.getItem(USER_ID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(USER_ID_KEY, id);
+    }
+    return id;
+  }
+  const userId = getOrCreateUserId();
 
   const TIME_EXAMPLES = [
     // Minutes (0.05–0.25h)
@@ -264,29 +278,74 @@
   }
 
   function saveWage() {
+    // 1. Save to localStorage (fast, works offline)
     localStorage.setItem(WAGE_TYPE_KEY, wageType);
     const raw = wageInput.value.replace(/,/g, '');
     if (raw) {
       localStorage.setItem(WAGE_KEY, raw);
     }
+
+    // 2. Save to Firestore (cloud backup — survives browser clears)
+    //    The "typeof db !== 'undefined'" check means the app still works
+    //    even if Firebase fails to load (e.g., no internet, ad blocker).
+    if (raw && typeof db !== 'undefined') {
+      db.collection('wages').doc(userId).set({
+        wageValue: raw,
+        wageType: wageType,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(function(error) {
+        console.warn('Firestore save failed (app still works fine):', error);
+      });
+    }
+  }
+
+  // Helper: apply wage type to the toggle UI
+  function applyWageType(type) {
+    wageType = type;
+    toggleBtns.forEach(btn => {
+      const isActive = btn.dataset.value === wageType;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', isActive);
+    });
+    toggleIndicator.classList.toggle('right', wageType === 'annual');
   }
 
   function loadWage() {
+    // 1. Load from localStorage first (instant, no network needed)
     const savedType = localStorage.getItem(WAGE_TYPE_KEY);
     if (savedType && (savedType === 'hourly' || savedType === 'annual')) {
-      wageType = savedType;
-      toggleBtns.forEach(btn => {
-        const isActive = btn.dataset.value === wageType;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-checked', isActive);
-      });
-      toggleIndicator.classList.toggle('right', wageType === 'annual');
+      applyWageType(savedType);
     }
     updatePlaceholder();
 
     const saved = localStorage.getItem(WAGE_KEY);
     if (saved) {
       wageInput.value = formatNumber(saved);
+    }
+
+    // 2. Then check Firestore (async — fills in data if localStorage was empty,
+    //    e.g., user cleared browser data or is on a new device)
+    if (typeof db !== 'undefined') {
+      db.collection('wages').doc(userId).get()
+        .then(function(doc) {
+          if (doc.exists) {
+            const data = doc.data();
+            // Only use Firestore data if localStorage was empty
+            if (!saved && data.wageValue) {
+              wageInput.value = formatNumber(data.wageValue);
+              localStorage.setItem(WAGE_KEY, data.wageValue);
+            }
+            if (!savedType && data.wageType) {
+              applyWageType(data.wageType);
+              updatePlaceholder();
+              localStorage.setItem(WAGE_TYPE_KEY, data.wageType);
+            }
+            update();
+          }
+        })
+        .catch(function(error) {
+          console.warn('Firestore load failed (app still works fine):', error);
+        });
     }
   }
 
