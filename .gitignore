@@ -1,1 +1,16 @@
-# Standard ignores
+# Firebase config (contains API keys)
+firebase-config.js
+
+# Environment variables
+.env*
+
+# Keys and secrets
+*.key
+*.pem
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
