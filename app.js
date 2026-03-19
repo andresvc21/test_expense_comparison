@@ -289,10 +289,10 @@
     //    The "typeof db !== 'undefined'" check means the app still works
     //    even if Firebase fails to load (e.g., no internet, ad blocker).
     if (raw && typeof db !== 'undefined') {
-      db.collection('wages').doc(userId).set({
+      db.collection('wages').doc(userId).collection('history').add({
         wageValue: raw,
         wageType: wageType,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        savedAt: firebase.firestore.FieldValue.serverTimestamp()
       }).catch(function(error) {
         console.warn('Firestore save failed (app still works fine):', error);
       });
@@ -326,10 +326,11 @@
     // 2. Then check Firestore (async — fills in data if localStorage was empty,
     //    e.g., user cleared browser data or is on a new device)
     if (typeof db !== 'undefined') {
-      db.collection('wages').doc(userId).get()
-        .then(function(doc) {
-          if (doc.exists) {
-            const data = doc.data();
+      db.collection('wages').doc(userId).collection('history')
+        .orderBy('savedAt', 'desc').limit(1).get()
+        .then(function(snapshot) {
+          if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
             // Only use Firestore data if localStorage was empty
             if (!saved && data.wageValue) {
               wageInput.value = formatNumber(data.wageValue);
